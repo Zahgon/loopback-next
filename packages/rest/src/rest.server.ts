@@ -320,6 +320,9 @@ export class RestServer
    */
   protected _applyExpressSettings() {
     assertExists(this._expressApp, 'this._expressApp');
+    // Express 5 defaults to the `simple` query parser, while LoopBack relies
+    // on nested query objects such as `filter[where][name]=x`
+    this._expressApp.set('query parser', 'extended');
     const settings = this.config.expressSettings;
     for (const key in settings) {
       this._expressApp.set(key, settings[key]);

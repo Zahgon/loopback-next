@@ -44,7 +44,10 @@ export class ExternalExpressRoutes {
     rootDir: string,
     options?: ServeStaticOptions,
   ) {
-    this._staticRoutes.use(path, express.static(rootDir, options));
+    this._staticRoutes.use(
+      toNamedWildcards(path),
+      express.static(rootDir, options),
+    );
   }
 
   public mountRouter(
@@ -52,7 +55,7 @@ export class ExternalExpressRoutes {
     router: ExpressRequestHandler,
     spec: RouterSpec = {paths: {}},
   ) {
-    this._externalRoutes.use(basePath, router);
+    this._externalRoutes.use(toNamedWildcards(basePath), router);
 
     spec = rebaseOpenApiSpec(spec, basePath);
     assignRouterSpec(this._specForExternalRoutes, spec);
@@ -136,4 +139,16 @@ export function rebaseOpenApiSpec<T extends Partial<OpenApiSpec>>(
   }
 
   return spec;
+}
+
+/**
+ * Express 5 only accepts named wildcards. Convert the unnamed `*` and `(.*)`
+ * wildcards accepted by Express 4 so that existing mount paths keep working.
+ * @param path - Mount path for `router.use()`
+ */
+function toNamedWildcards<T extends PathParams>(path: T): T;
+function toNamedWildcards(path: PathParams): PathParams {
+  if (Array.isArray(path)) return path.map(p => toNamedWildcards(p));
+  if (typeof path !== 'string') return path;
+  return path.replace(/\(\.\*\)|\*/g, '{*path}');
 }

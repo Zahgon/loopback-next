@@ -3,7 +3,7 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {parse, Token} from 'path-to-regexp';
+import {parseApiPath} from './openapi-path';
 import {RouteEntry} from './route-entry';
 
 /**
@@ -29,10 +29,8 @@ export function compareRoute(
   route2: Pick<RouteEntry, 'verb' | 'path'>,
 ): number {
   // First check the path tokens
-  const path1 = route1.path.replace(/{([^}]*)}(\/|$)/g, ':$1$2');
-  const path2 = route2.path.replace(/{([^}]*)}(\/|$)/g, ':$1$2');
-  const tokensForPath1: Token[] = toTokens(path1);
-  const tokensForPath2: Token[] = toTokens(path2);
+  const tokensForPath1 = toTokens(route1.path);
+  const tokensForPath2 = toTokens(route2.path);
 
   const length =
     tokensForPath1.length > tokensForPath2.length
@@ -60,15 +58,15 @@ export function compareRoute(
  * @param path - Parse a path template into tokens
  */
 function toTokens(path: string) {
-  const tokens: Token[] = [];
-  parse(path).forEach(p => {
-    if (typeof p === 'string') {
-      // The string can be /orders/count
-      tokens.push(...p.split('/').filter(Boolean));
+  const tokens: string[] = [];
+  for (const token of parseApiPath(path).tokens) {
+    if (token.type === 'text') {
+      // The text can be /orders/count
+      tokens.push(...token.value.split('/').filter(Boolean));
     } else {
       // Use `{}` for wildcard as they are larger than any other ascii chars
       tokens.push(`{}`);
     }
-  });
+  }
   return tokens;
 }

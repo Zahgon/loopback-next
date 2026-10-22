@@ -3,9 +3,9 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-import {Key, pathToRegexp} from 'path-to-regexp';
+import {Token} from 'path-to-regexp';
 import {PathParameterValues} from '../types';
-import {toExpressPath} from './openapi-path';
+import {parseApiPath} from './openapi-path';
 
 /**
  * A Node in the trie
@@ -216,13 +216,10 @@ function createNode<T>(
   }
 
   // Check if the key has variables such as `{var}`
-  const path = toExpressPath(key);
-  const params: Key[] = [];
-  const re = pathToRegexp(path, params);
-
-  if (params.length) {
-    child.names = params.map(p => `${p.name}`);
-    child.regexp = re;
+  const {tokens} = parseApiPath(key);
+  if (tokens.some(t => t.type === 'param')) {
+    child.names = tokens.flatMap(t => (t.type === 'param' ? [t.name] : []));
+    child.regexp = toSegmentRegExp(tokens);
   }
 
   // Add the node to the parent
@@ -230,4 +227,23 @@ function createNode<T>(
 
   // Create nodes for rest of the keys
   return createNode(keys, index + 1, value, child);
+}
+
+/**
+ * Build the regular expression matching a single path segment such as `{id}`
+ * or `{userId}.{format}`. Each parameter matches lazily, so literal text that
+ * follows it delimits the value.
+ * @param tokens - Tokens of the segment
+ */
+function toSegmentRegExp(tokens: Token[]) {
+  let pattern = '';
+  for (const token of tokens) {
+    pattern +=
+      token.type === 'param'
+        ? '([^\\/#\\?]+?)'
+        : token.type === 'text'
+          ? token.value.replace(/([.+*?=^!:${}()[\]|/\\])/g, '\\$1')
+          : '';
+  }
+  return new RegExp(`^${pattern}[\\/#\\?]?$`, 'i');
 }
