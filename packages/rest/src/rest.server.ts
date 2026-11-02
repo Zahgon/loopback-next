@@ -320,6 +320,9 @@ export class RestServer
    */
   protected _applyExpressSettings() {
     assertExists(this._expressApp, 'this._expressApp');
+    // Express 5 defaults to the `simple` query parser, while LoopBack relies
+    // on nested query objects such as `filter[where][name]=x`
+    this._expressApp.set('query parser', 'extended');
     const settings = this.config.expressSettings;
     for (const key in settings) {
       this._expressApp.set(key, settings[key]);
@@ -786,7 +789,8 @@ export class RestServer
   /**
    * Mount static assets to the REST server.
    * See https://expressjs.com/en/4x/api.html#express.static
-   * @param path - The path(s) to serve the asset.
+   * @param path - The path(s) to serve the asset. A `*` or `(.*)` in a path is
+   * a wildcard that matches any text, e.g. `/pub/*`.
    * See examples at https://expressjs.com/en/4x/api.html#path-examples
    * @param rootDir - The root directory from which to serve static assets
    * @param options - Options for serve-static
@@ -1017,7 +1021,8 @@ export class RestServer
    * Mount an Express router to expose additional REST endpoints handled
    * via legacy Express-based stack.
    *
-   * @param basePath - Path where to mount the router at, e.g. `/` or `/api`.
+   * @param basePath - Path where to mount the router at, e.g. `/`, `/api` or
+   * `/api/*`. A `*` or `(.*)` in the path is a wildcard that matches any text.
    * @param router - The Express router to handle the requests.
    * @param spec - A partial OpenAPI spec describing endpoints provided by the
    * router. LoopBack will prepend `basePath` to all endpoints automatically.

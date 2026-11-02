@@ -20,6 +20,7 @@ import HttpErrors from 'http-errors';
 import {ServeStaticOptions} from 'serve-static';
 import {RequestContext} from '../request-context';
 import {OperationArgs, OperationRetval, PathParameterValues} from '../types';
+import {toExpressMountPath} from './openapi-path';
 import {ResolvedRoute, RouteEntry} from './route-entry';
 import {assignRouterSpec, RouterSpec} from './router-spec';
 
@@ -44,7 +45,10 @@ export class ExternalExpressRoutes {
     rootDir: string,
     options?: ServeStaticOptions,
   ) {
-    this._staticRoutes.use(path, express.static(rootDir, options));
+    this._staticRoutes.use(
+      toExpressMountPath(path),
+      express.static(rootDir, options),
+    );
   }
 
   public mountRouter(
@@ -52,7 +56,7 @@ export class ExternalExpressRoutes {
     router: ExpressRequestHandler,
     spec: RouterSpec = {paths: {}},
   ) {
-    this._externalRoutes.use(basePath, router);
+    this._externalRoutes.use(toExpressMountPath(basePath), router);
 
     spec = rebaseOpenApiSpec(spec, basePath);
     assignRouterSpec(this._specForExternalRoutes, spec);

@@ -8,7 +8,7 @@ import {Key, pathToRegexp} from 'path-to-regexp';
 import {inspect} from 'util';
 import {RestBindings} from '../keys';
 import {PathParameterValues} from '../types';
-import {toExpressPath} from './openapi-path';
+import {parseApiPath} from './openapi-path';
 import {RestRouterOptions} from './rest-router';
 import {createResolvedRoute, ResolvedRoute, RouteEntry} from './route-entry';
 import {compareRoute} from './route-sort';
@@ -47,10 +47,8 @@ export class RegExpRouter extends BaseRouter {
   }
 
   protected addRouteWithPathVars(route: RouteEntry) {
-    const path = toExpressPath(route.path);
-    const keys: Key[] = [];
-    const regexp = pathToRegexp(path, keys, {
-      strict: this.options.strict,
+    const {regexp, keys} = pathToRegexp(parseApiPath(route.path), {
+      trailing: !this.options.strict,
       end: true,
     });
     const entry: RegExpRouteEntry = Object.assign(route, {keys, regexp});

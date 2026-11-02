@@ -65,6 +65,9 @@ export class ExpressServer extends BaseMiddlewareRegistry implements Server {
     this.basePath = basePath;
 
     this.expressApp = express();
+    // Keep the nested query objects of Express 4; Express 5 defaults to the
+    // `simple` query parser
+    this.expressApp.set('query parser', 'extended');
     if (config?.settings) {
       for (const p in config?.settings) {
         this.expressApp.set(p, config?.settings[p]);

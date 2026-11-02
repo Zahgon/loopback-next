@@ -112,7 +112,8 @@ export class RestApplication extends Application implements HttpServerLike {
   /**
    * Mount static assets to the REST server.
    * See https://expressjs.com/en/4x/api.html#express.static
-   * @param path - The path(s) to serve the asset.
+   * @param path - The path(s) to serve the asset. A `*` or `(.*)` in a path is
+   * a wildcard that matches any text, e.g. `/pub/*`.
    * See examples at https://expressjs.com/en/4x/api.html#path-examples
    * To avoid performance penalty, `/` is not allowed for now.
    * @param rootDir - The root directory from which to serve static assets
@@ -375,7 +376,8 @@ export class RestApplication extends Application implements HttpServerLike {
    * Mount an Express router to expose additional REST endpoints handled
    * via legacy Express-based stack.
    *
-   * @param basePath - Path where to mount the router at, e.g. `/` or `/api`.
+   * @param basePath - Path where to mount the router at, e.g. `/`, `/api` or
+   * `/api/*`. A `*` or `(.*)` in the path is a wildcard that matches any text.
    * @param router - The Express router to handle the requests.
    * @param spec - A partial OpenAPI spec describing endpoints provided by the
    * router. LoopBack will prepend `basePath` to all endpoints automatically.
